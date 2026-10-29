@@ -3,7 +3,11 @@
 plugins {
     id("com.android.library") version "8.5.2"
     id("org.jetbrains.kotlin.android") version "1.9.24"
+    `maven-publish`
 }
+
+group = "dev.watchtower"
+version = (System.getenv("GITHUB_REF_NAME") ?: "v0.1.0").removePrefix("v")
 
 android {
     namespace = "dev.watchtower"
@@ -15,6 +19,25 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
     testOptions { unitTests.isReturnDefaultValues = true }
+    publishing { singleVariant("release") { withSourcesJar() } }
+}
+
+publishing {
+    publications {
+        register<MavenPublication>("release") {
+            artifactId = "watchtower-android"
+            afterEvaluate { from(components["release"]) }
+        }
+    }
+    repositories {
+        maven("https://maven.pkg.github.com/watchtowerobservability/watchtower-android") {
+            name = "GitHubPackages"
+            credentials {
+                username = System.getenv("GITHUB_ACTOR") ?: ""
+                password = System.getenv("GITHUB_TOKEN") ?: ""
+            }
+        }
+    }
 }
 
 dependencies {
