@@ -1,7 +1,7 @@
 // Thin Watchtower distribution for Android (ruling L1): RUM batches, crash/ANR/app-start/frame
 // metrics and masked screenshot replay over the Watchtower edge. No product logic lives here.
 plugins {
-    id("com.android.library") version "8.5.2"
+    id("com.android.library") version "9.5.0"
     id("org.jetbrains.kotlin.android") version "1.9.24"
 }
 
