@@ -22,7 +22,7 @@ jobs:
         with:
           gradle-version: '8.9'
       - run: gradle testDebugUnitTest assembleRelease
-      - uses: actions/attest-build-provenance@v2
+      - uses: actions/attest-build-provenance@v4
         with:
           subject-path: 'build/outputs/aar/*.aar'
       - name: GitHub release
