@@ -4,6 +4,12 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      # AGP 9 needs Gradle 9 and Kotlin 2; bump the toolchain together by hand
+      - dependency-name: com.android.library
+        update-types: [version-update:semver-major]
+      - dependency-name: org.jetbrains.kotlin.android
+        update-types: [version-update:semver-major]
   - package-ecosystem: github-actions
     directory: /
     schedule:
