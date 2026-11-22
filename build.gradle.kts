@@ -87,5 +87,5 @@ dependencies {
     compileOnly("androidx.fragment:fragment:1.8.2")
     testImplementation("androidx.sqlite:sqlite:2.4.0")
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.json:json:20240303")
+    testImplementation("org.json:json:20260814")
 }
