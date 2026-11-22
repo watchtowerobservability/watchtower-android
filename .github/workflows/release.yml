@@ -33,11 +33,7 @@ jobs:
       - name: GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" build/outputs/aar/*.aar --generate-notes --verify-tag
-      - name: GitHub Packages
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: gradle publishReleasePublicationToGitHubPackagesRepository
+        run: gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" build/outputs/aar/*.aar --generate-notes --verify-tag
       - name: Import signing key
         if: env.SIGNING_KEY != ''
         run: |
@@ -46,6 +42,11 @@ jobs:
       # Maven Central via the Central Portal OSSRH staging API: upload, then the manual-upload POST
       # that closes and publishes the staging repository. Skipped when the secrets are unset or the
       # version is already on Central.
+      - name: GitHub Packages
+        continue-on-error: true # a re-run of a tag hits 409 here; Maven Central is the real target
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: gradle publishReleasePublicationToGitHubPackagesRepository
       - name: Maven Central
         if: env.MAVEN_CENTRAL_USERNAME != ''
         run: |
