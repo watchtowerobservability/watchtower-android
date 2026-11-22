@@ -12,6 +12,11 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+      MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+      SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+      SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -33,3 +38,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: gradle publishReleasePublicationToGitHubPackagesRepository
+      # Maven Central: runs only when the owner has set the secrets (MAVEN_CENTRAL_*, SIGNING_*).
+      - name: Maven Central
+        if: ${{ env.MAVEN_CENTRAL_USERNAME != '' }}
+        run: gradle publishReleasePublicationToMavenCentralRepository

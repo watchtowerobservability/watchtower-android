@@ -12,6 +12,10 @@ data class Event(
     val attrs: Map<String, Any> = emptyMap(),
     val tsNs: Long = System.currentTimeMillis() * 1_000_000L,
     val id: String = UUID.randomUUID().toString(),
+    /** 32 lowercase hex chars, for a `resource` event that carried a `traceparent`. */
+    val traceId: String? = null,
+    /** 16 lowercase hex chars. */
+    val spanId: String? = null,
 ) {
     fun toJson(): JSONObject = JSONObject().apply {
         put("id", id)
@@ -19,9 +23,14 @@ data class Event(
         put("type", type)
         put("name", name)
         value?.let { put("value", it) }
+        traceId?.let { put("trace_id", it) }
+        spanId?.let { put("span_id", it) }
         put("attrs", JSONObject(safeAttrs(attrs)))
     }
 }
+
+/** Buffer-only field: the session an event belongs to. [Transport] strips it before sending. */
+internal const val SESSION_KEY = "_sid"
 
 /** Receives every event before it is buffered; return null to drop it. */
 fun interface Redactor {
@@ -34,7 +43,13 @@ fun interface Redactor {
  */
 fun safeAttrs(a: Map<String, Any>): Map<String, Any> =
     a.filterKeys { !it.startsWith("wt.") && it.length <= 128 }
-        .mapValues { (_, v) -> if (v is String && v.length > 2048) v.take(2048) else v }
+        .mapValues { (k, v) ->
+            val cap = if (k in CRASH_ATTR_KEYS) 32_768 else 2048 // the edge's limits for crash attributes
+            if (v is String && v.length > cap) v.take(cap) else v
+        }
+
+/** Attributes the edge lets run to 32 KiB (stacks cut mid-JSON would be unusable). */
+private val CRASH_ATTR_KEYS = setOf("error.stack", "stack", "frames", "threads", "error.threads", "debug_images")
 
 fun batchJson(cfg: Config, session: String, device: Map<String, Any>, events: List<JSONObject>): String =
     JSONObject().apply {

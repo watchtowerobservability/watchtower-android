@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 internal object Replay {
     private val seq = AtomicInteger()
+    private val encoder = WireframeEncoder()
 
     fun install(app: Application, cfg: Config, wt: Watchtower) {
         val main = Handler(Looper.getMainLooper())
@@ -36,7 +37,7 @@ internal object Replay {
             override fun onActivityResumed(a: Activity) {
                 val r = object : Runnable {
                     override fun run() {
-                        runCatching { capture(a, cfg.replay)?.let { wt.postReplay(seq.getAndIncrement(), JSONArray().put(it).toString()) } }
+                        runCatching { (if (cfg.replay.mode == ReplayMode.WIREFRAME) wireframe(a, cfg.replay) else capture(a, cfg.replay))?.let { wt.postReplay(seq.getAndIncrement(), JSONArray().put(it).toString()) } }
                         main.postDelayed(this, cfg.replay.intervalMs)
                     }
                 }
@@ -68,6 +69,13 @@ internal object Replay {
         }.orEmpty()
         val tag = v.tag?.toString()
         return Node(kind(v), loc[0] - ox, loc[1] - oy, v.width, v.height, tag == "wt-unmask", tag == "wt-mask", kids)
+    }
+
+    /** The view hierarchy as a `wt.wireframe` event (full or diff); null when nothing changed. */
+    internal fun wireframe(a: Activity, cfg: ReplayConfig): JSONObject? {
+        val root = a.window.decorView
+        if (root.width <= 0 || root.height <= 0) return null
+        return encoder.encode(WireframeCapture.nodes(root, cfg), root.width, root.height, a.javaClass.simpleName, System.currentTimeMillis())
     }
 
     internal fun capture(a: Activity, cfg: ReplayConfig): JSONObject? {
