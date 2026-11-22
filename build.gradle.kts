@@ -70,7 +70,7 @@ publishing {
 
 // Signing is required by Maven Central; the armored key and its passphrase come from CI secrets only.
 signing {
-    val key = System.getenv("SIGNING_KEY")
+    val key = System.getenv("SIGNING_KEY")?.takeIf { it.isNotBlank() } // unset secrets arrive as ""
     isRequired = key != null
     if (key != null) {
         useInMemoryPgpKeys(key, System.getenv("SIGNING_PASSWORD") ?: "")
