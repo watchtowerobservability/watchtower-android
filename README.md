@@ -87,5 +87,5 @@ ProGuard/R8 mappings and NDK symbols upload through `sdks/gradle-plugin` (`watch
 
 The release workflow publishes to Maven Central (signed) when the repository secrets
 `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`, `SIGNING_KEY` (armored private key) and
-`SIGNING_PASSWORD` are set; GitHub Packages works with no extra setup. The `dev.watchtower`
-namespace must be verified on the Central Portal first.
+`SIGNING_PASSWORD` are set; GitHub Packages works with no extra setup. Coordinates: `io.github.watchtowerobservability:watchtower-android` (namespace verified on the Central Portal; the Kotlin
+package stays `dev.watchtower`).

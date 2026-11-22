@@ -7,7 +7,7 @@ plugins {
     signing
 }
 
-group = "dev.watchtower"
+group = "io.github.watchtowerobservability"
 version = (System.getenv("GITHUB_REF_NAME") ?: "v0.1.2").removePrefix("v")
 
 android {
@@ -25,7 +25,8 @@ android {
     if (project.findProperty("watchtower.ndk") == "true") {
         externalNativeBuild { cmake { path = file("src/main/cpp/CMakeLists.txt") } }
     }
-    publishing { singleVariant("release") { withSourcesJar() } }
+    // Central requires a javadoc jar; AGP builds one from the (Java-only) docs, near empty for Kotlin.
+    publishing { singleVariant("release") { withSourcesJar(); withJavadocJar() } }
 }
 
 publishing {
@@ -38,7 +39,7 @@ publishing {
                 description.set("RUM, crashes, ANRs, app start, frame vitals and masked replay over the Watchtower edge.")
                 url.set("https://github.com/watchtowerobservability/watchtower-android")
                 licenses { license { name.set("Apache-2.0"); url.set("https://www.apache.org/licenses/LICENSE-2.0.txt") } }
-                developers { developer { id.set("watchtower"); name.set("Watchtower") } }
+                developers { developer { id.set("watchtower"); name.set("Watchtower"); url.set("https://github.com/watchtowerobservability") } }
                 scm {
                     url.set("https://github.com/watchtowerobservability/watchtower-android")
                     connection.set("scm:git:https://github.com/watchtowerobservability/watchtower-android.git")
@@ -49,7 +50,7 @@ publishing {
     repositories {
         // Maven Central through the Central Portal's OSSRH staging API; credentials are CI secrets.
         // Without them the repository is not added, so local and fork builds are unaffected.
-        System.getenv("MAVEN_CENTRAL_USERNAME")?.let { user ->
+        System.getenv("MAVEN_CENTRAL_USERNAME")?.takeIf { it.isNotBlank() }?.let { user ->
             maven("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/") {
                 name = "MavenCentral"
                 credentials {
@@ -68,12 +69,12 @@ publishing {
     }
 }
 
-// Signing is required by Maven Central; the armored key and its passphrase come from CI secrets only.
+// Signing is required by Maven Central. CI imports SIGNING_KEY into gpg (ed25519 keys are not
+// reliably read by Gradle's bundled BouncyCastle), so sign through the gpg binary.
 signing {
-    val key = System.getenv("SIGNING_KEY")?.takeIf { it.isNotBlank() } // unset secrets arrive as ""
-    isRequired = key != null
-    if (key != null) {
-        useInMemoryPgpKeys(key, System.getenv("SIGNING_PASSWORD") ?: "")
+    isRequired = !System.getenv("SIGNING_KEY").isNullOrBlank() // unset secrets arrive as ""
+    if (isRequired) {
+        useGpgCmd()
         sign(publishing.publications)
     }
 }

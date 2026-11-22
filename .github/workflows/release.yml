@@ -38,7 +38,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: gradle publishReleasePublicationToGitHubPackagesRepository
-      # Maven Central: runs only when the owner has set the secrets (MAVEN_CENTRAL_*, SIGNING_*).
+      - name: Import signing key
+        if: env.SIGNING_KEY != ''
+        run: |
+          command -v gpg >/dev/null || brew install gnupg
+          printf '%s' "$SIGNING_KEY" | gpg --batch --import
+      # Maven Central via the Central Portal OSSRH staging API: upload, then the manual-upload POST
+      # that closes and publishes the staging repository. Skipped when the secrets are unset or the
+      # version is already on Central.
       - name: Maven Central
-        if: ${{ env.MAVEN_CENTRAL_USERNAME != '' }}
-        run: gradle publishReleasePublicationToMavenCentralRepository
+        if: env.MAVEN_CENTRAL_USERNAME != ''
+        run: |
+          V="${GITHUB_REF_NAME#v}"
+          if curl -fsI "https://repo1.maven.org/maven2/io/github/watchtowerobservability/watchtower-android/$V/" >/dev/null; then
+            echo "watchtower-android $V is already on Maven Central"; exit 0
+          fi
+          gradle publishReleasePublicationToMavenCentralRepository
+          AUTH=$(printf '%s:%s' "$MAVEN_CENTRAL_USERNAME" "$MAVEN_CENTRAL_PASSWORD" | base64 | tr -d '\n')
+          curl -fS -X POST -H "Authorization: Bearer $AUTH" \
+            "https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/io.github.watchtowerobservability?publishing_type=automatic"
