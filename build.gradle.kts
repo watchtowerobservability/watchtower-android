@@ -81,7 +81,7 @@ signing {
 
 dependencies {
     // WatchtowerInterceptor only; apps bring their own OkHttp (Apache-2.0)
-    compileOnly("com.squareup.okhttp3:okhttp:4.12.0")
+    compileOnly("com.squareup.okhttp3:okhttp:5.5.1")
     // WatchtowerSQLiteOpenHelperFactory only; Room and SQLDelight bring it (Apache-2.0)
     compileOnly("androidx.sqlite:sqlite:2.4.0")
     // fragment screen views only; apps with fragments already have it (Apache-2.0)
