@@ -85,7 +85,7 @@ dependencies {
     // WatchtowerSQLiteOpenHelperFactory only; Room and SQLDelight bring it (Apache-2.0)
     compileOnly("androidx.sqlite:sqlite:2.4.0")
     // fragment screen views only; apps with fragments already have it (Apache-2.0)
-    compileOnly("androidx.fragment:fragment:1.8.2")
+    compileOnly("androidx.fragment:fragment:1.9.1")
     testImplementation("androidx.sqlite:sqlite:2.4.0")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
